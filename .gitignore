@@ -1,0 +1,41 @@
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+build/
+bin/
+obj/
+
+# Visual Studio workspace
+.vs/
+
+# Other temporary files
+*.VC.db
+*.VC.opendb
+*.ipch
+*.aps
+*.ncb
+*.log
+*.tlog
+*.cache
+*.tmp
+*.pdb
+*.exe
+*.dll
+*.lib
+*.sdf
+*.dbmdl
+*.psess
+*.vsp
+*.vspx
+*.scc
+
+# Rider/VSCode
+.idea/
+.vscode/
