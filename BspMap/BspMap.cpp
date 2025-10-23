@@ -2,11 +2,19 @@
 #include <assert.h>
 #include "Utils.h"
 #include <iostream>
+#include <vector>
 #include <omp.h>
 
 using namespace KernelBridgeNS;
 using namespace SweepNS;
+using namespace std;
 
+//#pragma omp declare reduction(+: KernelBridgeNS::Pnt1D : omp_out += omp_in) initializer(omp_priv = KernelBridgeNS::Pnt1D())
+//#pragma omp declare reduction(+: KernelBridgeNS::Pnt2D : omp_out += omp_in) initializer(omp_priv = KernelBridgeNS::Pnt2D())
+//#pragma omp declare reduction(+: KernelBridgeNS::Pnt3D : omp_out += omp_in) initializer(omp_priv = KernelBridgeNS::Pnt3D())
+//#pragma omp declare reduction(+: KernelBridgeNS::Pnt4D : omp_out += omp_in) initializer(omp_priv = KernelBridgeNS::Pnt4D())
+//#pragma omp declare reduction(+: KernelBridgeNS::Pnt5D : omp_out += omp_in) initializer(omp_priv = KernelBridgeNS::Pnt5D())
+//#pragma omp declare reduction(+: KernelBridgeNS::Pnt6D : omp_out += omp_in) initializer(omp_priv = KernelBridgeNS::Pnt6D())
 
 
 template <class PTypeD, class PTypeR>
@@ -609,7 +617,7 @@ void BspMap<PTypeD, PTypeR>::transform(PTypeR translate, SReal scale)
 	}
 }
 
-/*
+
 template <class PTypeD, class PTypeR>
 PTypeR BspMap<PTypeD, PTypeR>::evaluate(const PTypeD & params)	const
 {
@@ -637,9 +645,14 @@ PTypeR BspMap<PTypeD, PTypeR>::evaluate(const PTypeD & params)	const
     return retPt;
 }
 
-*/
-
-
+/*
+template <typename PTypeR>
+PTypeR parallel_sum(const std::vector<PTypeR>& partials) {
+	PTypeR total;
+	for (const auto& p : partials)
+		total += p;
+	return total;
+}
 
 template <class PTypeD, class PTypeR>
 PTypeR BspMap<PTypeD, PTypeR>::evaluate(const PTypeD& params) const
@@ -674,13 +687,18 @@ PTypeR BspMap<PTypeD, PTypeR>::evaluate(const PTypeD& params) const
 	}
 	else {
 		// Parallel version for larger problems
-		omp_set_num_threads(8);
-
+		omp_set_num_threads(4);
+		int num_threads = 0;
+		vector<PTypeR> threadResults(omp_get_max_threads());
 #pragma omp parallel
 		{
-			PTypeR localRetPt;
+				int tid = omp_get_thread_num();
+			//	int nthreads = omp_get_num_threads();
+			//	cout << "Total threads spawned: " << nthreads << endl;
+			//	cout << "Max threads: " << omp_get_max_threads()<<endl;
+				PTypeR localRetPt;
 
-#pragma omp for schedule(static) nowait
+#pragma omp for schedule(static)
 
 			for (SInt flatIdx = 0; flatIdx < total; ++flatIdx) {
 				// Decompose flat index into multi-dimensional indices
@@ -699,14 +717,13 @@ PTypeR BspMap<PTypeD, PTypeR>::evaluate(const PTypeD& params) const
 				localRetPt += _points[localIndex] * localBasisProd;
 			}
 
-#pragma omp critical
-			{
-				retPt += localRetPt;
-			}
+			threadResults[tid] = localRetPt;
 		}
+		retPt = parallel_sum(threadResults);
 	}
 	return retPt;
 }
+*/
 
 /*
 template <class PTypeD, class PTypeR>
